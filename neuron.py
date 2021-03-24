@@ -13,8 +13,8 @@ class Neuron():
         self.w2 = 0.5
 
     # prend entrées, qui peuvent etre une photo de chat
-    def forward(self, x1, x2):
-        return (x1*self.w1 + x2*self.w2)
+    def forward(self, inputs):
+        return (inputs[0]*self.w1 + inputs[1]*self.w2)
 
     def activation(self, input):
         return input
@@ -33,25 +33,55 @@ class Neuron():
             matResult.append(sum(x))
         return matResult
 
-    def meanSquareErrorLoss(self,expected,result):
+    def meanSquareErrorLoss(self, inputs, result):
+        expected = sum(inputs)
         return np.square(np.subtract(expected, result)).mean()
 
-    def gradient(self,x1,x2,expected,result):
+    def backPropagate(self, gradients):
+        self.w1 = gradients[0]
+        self.w2 = gradients[1]
+        print('new w1', self.w1)
+        print('new w2', self.w2)
+
+class Trainer():
+
+    def __init__(self,model):
+        self.model = model
+    
+    def meanSquareErrorLoss(self, inputs, result):
+        expected = sum(inputs)
+        return np.square(np.subtract(expected, result)).mean()
+    
+    def gradient(self, inputs, result):
+        expected = sum(inputs)
         gradients = []
-        nw1 = self.w1 - (x1 * ((2 * expected) - (2*result)))
-        nw2 = self.w2 - (x2 * ((2 * expected) - (2*result)))
+        nw1 = 0
+        nw2 = 0
+        for i in range(len(inputs)):
+            if i == 0:
+                nw1 = self.model.w1 - (inputs[i] * ((2 * expected) - (2*result)))
+            if i == 1:
+                nw2 = self.model.w2 - (inputs[i] * ((2 * expected) - (2*result)))
+
         gradients.append(nw1)
         gradients.append(nw2)
         return gradients
+    
+    def train(self,inputs):
+        for i in inputs:
+            print(i)
+            pred = self.model.forward(i)
+            grad = self.gradient(i,pred)
+            self.model.backPropagate(grad)
+            print('Error loss:', myneuron.meanSquareErrorLoss(i, pred))          
+
 
 if __name__ == "__main__":
     myneuron = Neuron()
+    #inputs = [[3, 4],[3,4]]
+    inputs = myneuron.getRandomMatrice(2,4)
+    print(inputs)
     x1 = 3
     x2 = 4
-    x = myneuron.forward(x1, x2) #result
-    expected = x1+x2
-    print(myneuron.meanSquareErrorLoss(x1+x2,x))
-    print(myneuron.gradient(x1,x2,expected,x))     
-    # on a soit l'un soit l'autre, soit entre les 2
-    # donc il prédit l'un ou l'autre ou il ne sait pas lequel c'est
-    # print('x1 = {} et x2 = {}, res = {}'.format(x1, x2, myneuron.activation(x)))
+    trainer = Trainer(myneuron)
+    trainer.train(inputs)
