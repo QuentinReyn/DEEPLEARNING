@@ -2,7 +2,7 @@
 # -*-coding:Utf-8 -*
 import random as r
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 class Neuron():
 
@@ -25,7 +25,7 @@ class Neuron():
         return np.random.rand(size)
 
     def getRandomMatrice(self, width, height):
-        return np.random.rand(height, width)
+        return np.random.rand(height, width)*10
 
     def getSumResult(self, inputMat):
         matResult = []
@@ -52,36 +52,45 @@ class Trainer():
         expected = sum(inputs)
         return np.square(np.subtract(expected, result)).mean()
     
-    def gradient(self, inputs, result):
+    def gradient(self, inputs, result, lr): #nouveau poids
         expected = sum(inputs)
         gradients = []
         nw1 = 0
         nw2 = 0
         for i in range(len(inputs)):
             if i == 0:
-                nw1 = self.model.w1 - (inputs[i] * ((2 * expected) - (2*result)))
+                nw1 = self.model.w1 - lr * (inputs[i] * ((2 * expected) - (2*result)))
             if i == 1:
-                nw2 = self.model.w2 - (inputs[i] * ((2 * expected) - (2*result)))
+                nw2 = self.model.w2 - lr * (inputs[i] * ((2 * expected) - (2*result)))
 
         gradients.append(nw1)
         gradients.append(nw2)
         return gradients
     
     def train(self,inputs):
-        for i in inputs:
+        errors = []
+        learningRate = 0.000001
+        for idx,i in enumerate(inputs):
             print(i)
             pred = self.model.forward(i)
-            grad = self.gradient(i,pred)
+            grad = self.gradient(i,pred,learningRate)
             self.model.backPropagate(grad)
-            print('Error loss:', myneuron.meanSquareErrorLoss(i, pred))          
+            error = myneuron.meanSquareErrorLoss(i, pred)
+            errors.append(error)
+            print('Error loss:', error)
+        return errors          
 
 
 if __name__ == "__main__":
     myneuron = Neuron()
     #inputs = [[3, 4],[3,4]]
-    inputs = myneuron.getRandomMatrice(2,4)
-    print(inputs)
-    x1 = 3
-    x2 = 4
-    trainer = Trainer(myneuron)
-    trainer.train(inputs)
+    loopCount = 5
+    for i in range(loopCount):
+        inputs = myneuron.getRandomMatrice(2,5*(i+1))
+        print(inputs)
+        trainer = Trainer(myneuron)
+        errors = trainer.train(inputs)
+    plt.plot(errors)
+    plt.xlabel("Iterations")
+    plt.ylabel("Error for all training instances")
+    plt.savefig("cumulative_error.png")
